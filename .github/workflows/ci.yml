@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DATABASE_URL: postgres://promptscope:promptscope@localhost:5432/promptscope
+  REDIS_URL: redis://localhost:6379
+  BETTER_AUTH_SECRET: ci-secret-that-is-at-least-32-characters-long
+  BETTER_AUTH_URL: http://localhost:5173
+  DEMO_USER_PASSWORD: ci-demo-password
+  PUBLIC_INGEST_URL: http://localhost:4318
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: promptscope
+          POSTGRES_PASSWORD: promptscope
+          POSTGRES_DB: promptscope
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U promptscope" --health-interval 2s --health-timeout 3s --health-retries 30
+      redis:
+        image: redis:8
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 2s --health-timeout 3s --health-retries 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm db:migrate
+      - run: pnpm db:seed
+
+  e2e:
+    needs: check
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: promptscope
+          POSTGRES_PASSWORD: promptscope
+          POSTGRES_DB: promptscope
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U promptscope" --health-interval 2s --health-timeout 3s --health-retries 30
+      redis:
+        image: redis:8
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 2s --health-timeout 3s --health-retries 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:migrate && pnpm db:seed
+      - run: pnpm --filter @promptscope/web exec playwright install --with-deps chromium
+      - run: pnpm e2e
+        env:
+          CI: "true"
+      - if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report

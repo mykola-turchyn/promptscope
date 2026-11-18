@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "access": "public",
+  "baseBranch": "main",
+  "ignore": [
+    "@promptscope/web",
+    "@promptscope/ingest",
+    "@promptscope/worker",
+    "@promptscope/db",
+    "@promptscope/shared",
+    "@promptscope/tsconfig"
+  ]
+}

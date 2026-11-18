@@ -1,0 +1,30 @@
+{
+  "name": "promptscope",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.14.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "pnpm services:up && turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "services:up": "docker compose up -d --wait",
+    "services:down": "docker compose down",
+    "db:generate": "pnpm --filter @promptscope/db generate",
+    "db:migrate": "pnpm --filter @promptscope/db migrate",
+    "db:seed": "pnpm --filter @promptscope/db seed",
+    "e2e": "pnpm --filter @promptscope/web e2e",
+    "example": "pnpm --filter @promptscope/sdk build && pnpm --filter @promptscope/example-support-bot start"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.8",
+    "@changesets/cli": "3.0.3",
+    "turbo": "2.11.12",
+    "typescript": "6.0.3"
+  }
+}

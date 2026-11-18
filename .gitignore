@@ -1,0 +1,13 @@
+node_modules
+dist
+build
+.react-router
+.turbo
+.env
+coverage
+playwright-report
+test-results
+*.tsbuildinfo
+.DS_Store
+.idea
+.claude
